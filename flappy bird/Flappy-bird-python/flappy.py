@@ -75,7 +75,7 @@ def main_game():
 
         crash_test = is_collide(playerx, playery, upper_pipes, lower_pipes)
         if crash_test:
-            return False, score
+            return False, score, upper_pipes, lower_pipes, basex
 
         player_mid_pos = playerx + game_sprites['player'].get_width() / 2
         for pipe in upper_pipes:
@@ -141,6 +141,41 @@ def is_collide(playerx, playery, upper_pipes, lower_pipes):
             return True
     return False
 
+def game_over_screen(final_score, last_upper_pipes, last_lower_pipes, basex):
+    """Display game over screen with final score and wait for restart/quit"""
+    gameover_x = int((screen_width - game_sprites['gameover'].get_width()) / 2)
+    gameover_y = int(screen_height * 0.3)
+    
+    while True:
+        for event in pygame.event.get():
+            if event.type == QUIT or (event.type == KEYDOWN and event.key == K_ESCAPE):
+                pygame.quit()
+                sys.exit()
+            elif event.type == KEYDOWN and (event.key == K_SPACE or event.key == K_UP):
+                return True  # Restart game
+        
+        # Draw background and pipes from last game state
+        screen.blit(game_sprites['background'], (0, 0))
+        for upper_pipe, lower_pipe in zip(last_upper_pipes, last_lower_pipes):
+            screen.blit(game_sprites['pipe'][0], (upper_pipe['x'], upper_pipe['y']))
+            screen.blit(game_sprites['pipe'][1], (lower_pipe['x'], lower_pipe['y']))
+        
+        screen.blit(game_sprites['base'], (basex, ground_y))
+        screen.blit(game_sprites['gameover'], (gameover_x, gameover_y))
+        
+        # Display final score
+        my_digits = [int(x) for x in list(str(final_score))]
+        width = 0
+        for digit in my_digits:
+            width += game_sprites['numbers'][digit].get_width()
+        xoffset = (screen_width - width) / 2
+        for digit in my_digits:
+            screen.blit(game_sprites['numbers'][digit], (xoffset, screen_height * 0.5))
+            xoffset += game_sprites['numbers'][digit].get_width()
+        
+        pygame.display.update()
+        pygame.time.Clock().tick(30)
+
 def get_random_pipe():
     pipe_height = game_sprites['pipe'][0].get_height()
     offset = screen_height / 3
@@ -166,6 +201,7 @@ if __name__ == "__main__":
     )
     game_sprites['background'] = pygame.image.load(background).convert()
     game_sprites['player'] = pygame.image.load(player).convert_alpha()
+    game_sprites['gameover'] = pygame.image.load('assets/sprites/gameover.png').convert_alpha()
 
     game_sounds['die'] = pygame.mixer.Sound('assets/audio/die.wav')
     game_sounds['hit'] = pygame.mixer.Sound('assets/audio/hit.wav')
@@ -175,10 +211,5 @@ if __name__ == "__main__":
 
     while True:
         welcome_screen()
-        game_over, final_score = main_game()
-        print(f"Game Over! Your Score: {final_score}")
-        print("Do you want to play again? (Y/N): ", end="")
-        ans = input().strip().lower()
-        if ans != 'y':
-            pygame.quit()
-            sys.exit()
+        game_over, final_score, last_upper_pipes, last_lower_pipes, basex = main_game()
+        game_over_screen(final_score, last_upper_pipes, last_lower_pipes, basex)
