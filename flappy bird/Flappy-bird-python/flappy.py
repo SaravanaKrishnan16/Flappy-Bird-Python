@@ -30,7 +30,7 @@ def welcome_screen():
                 return
             else:
                 screen.blit(game_sprites['background'], (0, 0))
-                screen.blit(game_sprites['player'], (playerx, playery))
+                screen.blit(game_sprites['player'][0], (playerx, playery))
                 screen.blit(game_sprites['message'], (messagex, messagey))
                 screen.blit(game_sprites['base'], (basex, ground_y))
                 pygame.display.update()
@@ -63,6 +63,10 @@ def main_game():
     player_flap_accv = -8
     player_flapped = False
 
+    # Bird animation
+    player_frame = 0
+    frame_counter = 0
+
     while True:
         for event in pygame.event.get():
             if event.type == QUIT or (event.type == KEYDOWN and event.key == K_ESCAPE):
@@ -77,7 +81,7 @@ def main_game():
         if crash_test:
             return False, score
 
-        player_mid_pos = playerx + game_sprites['player'].get_width() / 2
+        player_mid_pos = playerx + game_sprites['player'][0].get_width() / 2
         for pipe in upper_pipes:
             pipe_mid_pos = pipe['x'] + game_sprites['pipe'][0].get_width() / 2
             if pipe_mid_pos <= player_mid_pos < pipe_mid_pos + 4:
@@ -89,7 +93,7 @@ def main_game():
 
         if player_flapped:
             player_flapped = False
-        player_height = game_sprites['player'].get_height()
+        player_height = game_sprites['player'][0].get_height()
         playery = playery + min(player_vel_y, ground_y - playery - player_height)
 
         for upper_pipe, lower_pipe in zip(upper_pipes, lower_pipes):
@@ -105,13 +109,18 @@ def main_game():
             upper_pipes.pop(0)
             lower_pipes.pop(0)
 
+        # Update bird animation frame
+        frame_counter += 1
+        if frame_counter % 5 == 0:
+            player_frame = (player_frame + 1) % 3
+
         screen.blit(game_sprites['background'], (0, 0))
         for upper_pipe, lower_pipe in zip(upper_pipes, lower_pipes):
             screen.blit(game_sprites['pipe'][0], (upper_pipe['x'], upper_pipe['y']))
             screen.blit(game_sprites['pipe'][1], (lower_pipe['x'], lower_pipe['y']))
 
         screen.blit(game_sprites['base'], (basex, ground_y))
-        screen.blit(game_sprites['player'], (playerx, playery))
+        screen.blit(game_sprites['player'][player_frame], (playerx, playery))
         my_digits = [int(x) for x in list(str(score))]
         width = 0
         for digit in my_digits:
@@ -165,7 +174,12 @@ if __name__ == "__main__":
         pygame.image.load('assets/sprites/pipe-green.png').convert_alpha()
     )
     game_sprites['background'] = pygame.image.load(background).convert()
-    game_sprites['player'] = pygame.image.load(player).convert_alpha()
+    # Load bird animation frames
+    game_sprites['player'] = (
+        pygame.image.load('assets/sprites/bluebird-upflap.png').convert_alpha(),
+        pygame.image.load('assets/sprites/bluebird-midflap.png').convert_alpha(),
+        pygame.image.load('assets/sprites/bluebird-downflap.png').convert_alpha(),
+    )
 
     game_sounds['die'] = pygame.mixer.Sound('assets/audio/die.wav')
     game_sounds['hit'] = pygame.mixer.Sound('assets/audio/hit.wav')
