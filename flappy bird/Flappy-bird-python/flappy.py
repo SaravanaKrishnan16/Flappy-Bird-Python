@@ -129,14 +129,26 @@ def is_collide(playerx, playery, upper_pipes, lower_pipes):
         game_sounds['hit'].play()
         return True
 
+    # Create bird bounding rectangle
+    player_rect = pygame.Rect(playerx, playery,
+                              game_sprites['player'].get_width(),
+                              game_sprites['player'].get_height())
+
+    # Check collision with upper pipes
     for pipe in upper_pipes:
-        pipe_height = game_sprites['pipe'][0].get_height()
-        if (playery < pipe_height + pipe['y'] and abs(playerx - pipe['x']) < game_sprites['pipe'][0].get_width()):
+        pipe_rect = pygame.Rect(pipe['x'], pipe['y'],
+                                game_sprites['pipe'][0].get_width(),
+                                game_sprites['pipe'][0].get_height())
+        if player_rect.colliderect(pipe_rect):
             game_sounds['hit'].play()
             return True
 
+    # Check collision with lower pipes
     for pipe in lower_pipes:
-        if (playery + game_sprites['player'].get_height() > pipe['y'] and abs(playerx - pipe['x']) < game_sprites['pipe'][0].get_width()):
+        pipe_rect = pygame.Rect(pipe['x'], pipe['y'],
+                                game_sprites['pipe'][1].get_width(),
+                                game_sprites['pipe'][1].get_height())
+        if player_rect.colliderect(pipe_rect):
             game_sounds['hit'].play()
             return True
     return False
